@@ -11,7 +11,7 @@ a list containing a dict of each stock record.
 import os
 
 def create_dataset(ticker):
-    input_dir = r'C:\Users\divth\Documents\BU\Spring23\CS677 O2\Homework\HomeworkSubmissions\HomeworkSubmissions_CS677\Homework1\submission\datasets'
+    input_dir = os.path.abspath(__file__) + '\..\datasets'
     ticker_file = os.path.join(input_dir, ticker + '.csv')
 
     headers = []
