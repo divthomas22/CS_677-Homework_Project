@@ -47,12 +47,12 @@ def create_dataset(ticker):
     return data
 
 # test data pull for each ticker's data
-tgt_dataset = create_dataset('TGT')
-spy_dataset = create_dataset('SPY')
+# tgt_dataset = create_dataset('TGT')
+# spy_dataset = create_dataset('SPY')
 
 #output record count for testing
-print('TGT record count: ',len(tgt_dataset))
-print('SPY record count: ',len(spy_dataset))
+# print('TGT record count: ',len(tgt_dataset))
+# print('SPY record count: ',len(spy_dataset))
 
 
 
