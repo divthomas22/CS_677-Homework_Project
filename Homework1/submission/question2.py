@@ -16,7 +16,7 @@ tgt_file =rdf.create_dataset('TGT')
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 years = ['2018', '2019', '2020', '2021', '2022']
 
-# Question 2.1-2,4 : Answered on supplementary word document
+# Question 2.1-2,4 : Answered on summary word document
 
 # Question 2.3 - Use the previous question's functions to determine the best 
 # and worst weekday returns of the year.

@@ -10,7 +10,7 @@ Compute and analyze the aggregate table for all 5 years for TGT and SPY
 import question1 as q1
 import read_stock_data_from_file as rdf
 
-# Get the dataset for 'TGT'
+# Get the dataset for 'TGT' and 'SPY'
 tgt_file =rdf.create_dataset('TGT')
 spy_file =rdf.create_dataset('SPY')
 
@@ -100,4 +100,4 @@ print('\nSPY Best/Worst: ')
 get_best_weekday_agg(spy_file)
 get_worst_weekday_agg(spy_file)
 
-# Question 3.2 : Answered on supplementary word document
+# Question 3.2 : Answered on summary word document
