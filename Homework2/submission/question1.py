@@ -46,13 +46,13 @@ def compute_default_probability(dataframe):
 
     #calulate probability
     probability = (pos_count/tot_count)
-
-    print("The default probability that the next day after 2020 is an 'up' day is", probability)
+    return probability
 
 print("TGT: ", end='')
-compute_default_probability(tgt_df)
+print("The default probability that the next day after 2020 is an 'up' day is", compute_default_probability(tgt_df))
 print("SPY: ", end='')
-compute_default_probability(spy_df)
+print("The default probability that the next day after 2020 is an 'up' day is", compute_default_probability(spy_df))
+
 
 # Question 1.3 - Calulcate the probability of a day being + for k = 1, 2, 3, where k is the number of 
 # times "-" occurs before the day in question
