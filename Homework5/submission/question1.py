@@ -1,63 +1,44 @@
 """
 Divya Thomas 
 Class: CS 677
-Date: 4/8/2023
+Date: 4/15/2023
 Homework Problem #1
 Description of Problem (just a 1-2 line summary!): 
-Seperate the data into deceased and surviving patients and visualize their correlation factors.
+Upload the raw data for the diagnostic features for CTGs performed and 
+insert into a dataframe to be used for analysis on the relationship 
+of normal cases and abnormal cases with the features: MSTV, Width, Mode, Variance
 """
 import pandas as pd 
-import matplotlib.pyplot as plt
-import seaborn as sns
+import numpy as np
 import os
 
-# Question 1.1 - Read the patient data into two seperate dataframes (surviving and deceased patients)
+# Question 1.1 - Read the raw data into a dataframe and clean up any incomplete rows
 print ("\n--Question 1.1--")
-#function to convert the csv data into a pandas dataframe
-def create_pandas_dataframes():
-
+#function to convert the excel data into a pandas dataframe
+def create_pandas_dataframe():
     #get file path
     input_dir = os.path.abspath(__file__) + '\..\datasets'
-    file = os.path.join(input_dir, 'heart_failure_clinical_records_dataset.csv')
-
+    file = os.path.join(input_dir, 'CTG.xls')
     #convert to df
-    df = pd.read_csv(file)
+    full_df = pd.read_excel(file, sheet_name='Raw Data')
 
-    df_0 = df[df['DEATH_EVENT'] == 0] #surviving patients 
-    df_1 = df[df['DEATH_EVENT'] == 1] #deceased patients
+    #remove any rows that contain any NaN values
+    full_df = full_df.dropna()
 
-    return (df_0, df_1)
+    # add nsf_class column
+    full_df = add_nsp_class(full_df)
 
-df_0, df_1 = create_pandas_dataframes()
+    # Use only the columns that your group is assigned to analyze: 
+    #  Group 3: MSTV, Width, Mode, Variance
+    df = full_df[['MSTV', 'Width', 'Mode', 'Variance', 'NSP', 'NSP_CLASS']] 
 
-print('Surviving patients: \n', df_0)
-print('\nDeceased patients: \n', df_1)
+    return df
 
-# Question 1.2 - Create a correlation matrix and visual representation of the dataset
-print ("\n--Question 1.2--")
-def create_corr_plot(df, filename):
-    #get file path to save plot to
-    input_dir = os.path.abspath(__file__) + '\..\datasets'
-    file = os.path.join(input_dir, filename)
+# Question 1.2 - Add a binary classifier by organizing the NSP values:
+# 1 - Normal(NSP = 1), 0 - Abnormal (NSP = anything else)
+def add_nsp_class(df):
+    df['NSP_CLASS'] = np.where(df['NSP'] == 1, 1, 0)
+    return df
 
-    #construct the correlation matrix
-    m = df.corr()
-
-    # Visualize correlation matrix
-    plt.figure(figsize=(10,10))
-    plot = sns.heatmap(df.corr().round(3), annot = True)
- 
-    #save to file
-    plt.savefig(file)
-
-    print("Saving file %s to datasets directory..." % filename)
-
-    return m
-
-m0 = create_corr_plot(df_0, "surviving_patients.png")
-m1 = create_corr_plot(df_1, "deceased_patients.png")
-
-print(m0, '\n', m1)
-
-
-# Question 1.3 - See supplemental documentation.
+df = create_pandas_dataframe()
+print(df)

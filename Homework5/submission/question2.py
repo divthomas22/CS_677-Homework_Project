@@ -1,239 +1,102 @@
 """
 Divya Thomas 
 Class: CS 677
-Date: 4/8/2023
+Date: 4/15/2023
 Homework Problem #2
 Description of Problem (just a 1-2 line summary!):
-Perform predictions using the five models and calculate the estimated loss for each. 
+Perform predictions of the NSP_CLASS using the Naive Bayesian classifier
+and analyze its performance.
 """
-import os
 import question1 as q1
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+import question5 as q5
+from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import confusion_matrix
 
-df_0, df_1 = q1.create_pandas_dataframes()
 
-# Question 2 - Split each df up into train and test data (X: serum sodium, Y : serum creatinine)
+df = q1.create_pandas_dataframe()
+
+# Question 2.1 - Split df up into train and test data (X:['MSTV', 'Width', 'Mode', 'Variance', 'NSP'], Y : NSP_CLASS)
+# then use Naive Bayesian NB classifier to predict class values for test data 
+print ("\n--Question 2.1--")
+# split test data 50/50 consistently
 def split(df):
+    x = df[['MSTV', 'Width', 'Mode', 'Variance']]
+    y = df['NSP_CLASS']
     x_train,x_test,y_train,y_test = train_test_split(
-        df[['serum_sodium']], 
-        df['serum_creatinine'], 
+        x, 
+        y, 
         test_size=0.5, 
-        random_state=0)
+        random_state=42)
     
     train = (x_train, y_train)
     test = (x_test, y_test)
     return (train, test)
 
-#function to plot predicted values as a line graph and actual as a scatter plot
-def create_plot(test, y_pred, name):
-    #plot the predicted values as a line graph
-    fig,ax = plt.subplots()
-    ax.set_xlabel('serum_sodium')
-    ax.set_ylabel('serum_creatinine')
-    ax.plot(test[0], y_pred, color='blue', label='Predicted')
+# Use Naive Bayesian NB classifier to predict class values for test data
+def predict_nb(train, test):
 
-    # plot the actual values as a scatter plot
-    ax.scatter(test[0], test[1], color='red', label='Actual')
+    # Fit a Naive Bayesian classifier to the training data
+    nb = GaussianNB()
+    nb.fit(train[0], train[1])
 
-    ax.legend()
+    #predict test data classes with the model
+    pred = nb.predict(test[0])
 
-    #file location to save the plot
-    input_dir = os.path.abspath(__file__) + '\..\datasets\q2'
-    plot_file = os.path.join(input_dir, name)
+    #create a copy of the test data with the added predictions
+    test_copy = test[0].copy()
+    test_copy['Actual'] = test[1]
+    test_copy['Prediction'] = pred
 
-    plt.savefig(plot_file)
+    return test_copy
 
-    print("Plot saved to " + str(plot_file))
+split_data = split(df)
+results = predict_nb(split_data[0], split_data[1])
+print("NB Classifier Results: \n", results)
 
-# function to compute SSE (L = sum((y_actual-y_pred)**2)) 
-def compute_sse(actual, pred):
-    # create a temp df containing actual and predicted values
-    df = pd.DataFrame()
-    df['actual'] = actual
-    df['predicted'] = pred
+# Question 2.2 - Calculate the accuracy of the classifier
+print ("\n--Question 2.2--")
+def accuracy(dataframe):
+    # get the list of actual NSP class values
+    actual = dataframe['Actual'].tolist()
+    # get the list of the predicted values 
+    pred = dataframe["Prediction"].tolist()
+    # get the total count of the predicted values 
+    tot_count = len(pred)
+    # set a counter for the correct predictions
+    success_count = 0
 
-    # L - SSE sum of the squared of residuals
-    sum = 0
-    # Iterate through each row of the DataFrame
-    for index, row in df.iterrows():
-        # get each y value 
-        y_actual = row['actual']
-        y_pred = row['predicted']
+    #match up each index in actual with predictions and increment success count if they match
+    for i in range(0, tot_count):
+        if (actual[i] == pred[i]):
+            success_count += 1
+    # return the percentage of success
+    return (success_count / tot_count) * 100
 
-        # compute the residual and square it 
-        res = y_actual - y_pred
-        res_sq = (res)**2
+acc = accuracy(results)
+print ("Accuracy: %.2f%%" % acc)
 
-        # add it to the sum 
-        sum += res_sq
+# Question 2.3 - Construct the confusion matrix for this
+print ("\n--Question 2.3--")
+def compute_confusion_matrix(df):
+    # compute the confusion matrix
+    cm = confusion_matrix(df['Actual'], df['Prediction'])
+    return cm
 
-    sum = np.round(sum, 3)
-    
-    print ("SSE = " + str(sum))
+cm = compute_confusion_matrix(results)
+print("Confusion Matrix: \n", cm)
 
-train0, test0 = split(df_0)
-train1, test1 = split(df_1)
-
-print ("\n--Question 2.1 (Linear Regression)--")
-# Question 2.1 - Use linear regression to predict the test data values
-def predict_lr(train, test, name):
-    lr = LinearRegression()
-
-    # a. fit the model
-    lr.fit(train[0], train[1])
-
-    # b. Print the weights a and b 
-    print ("Weights: a=%.3f , b=%.3f" % (lr.coef_[0], lr.intercept_))
-
-    # c. predict test data values and round to 2 decimal places
-    pred = np.round(lr.predict(test[0]),2)
-
-    # d. plot actual and predicted values and save to file
-    create_plot(test, pred, name)
-
-    # e. compute the loss function (SSE)
-    compute_sse(test[1], pred)
+def get_split():
+    return split_data
 
 
-print("\nSurviving Patients:")
-predict_lr(train0, test0, "LR_0.png")
+# For Question 5
+counts = q5.calc_label_accuracies(results)
+tpr = q5.calc_tpr(counts)
+tnr = q5.calc_tnr(counts)
 
-print("\nDeceased Patients:")
-predict_lr(train1, test1, "LR_1.png")
+def print_counts():
+    print("\n--NB Counts (Q5)--")
+    print("TP: %d \nFN: %d \nTN: %d \nFP: %d \nTPR: %.2f \nTNR: %.2f \nAccuracy: %.2f%%" % (counts[0], counts[1], counts[2], counts[3], tpr, tnr, acc))
 
-
-print ("\n--Question 2.2 (Quadratic)--")
-# Question 2.2 - Use quadratic regression to predict the test data values
-def predict_q(train, test, name):
-    q = PolynomialFeatures(degree=2, include_bias=False)
-
-    # Transform x data to polynomial features
-    x_train = q.fit_transform(train[0])
-    x_test = q.transform(test[0])
-
-    # a. fit the model
-    lr = LinearRegression()
-    lr.fit(x_train, train[1])
-
-    # b. Print the weights a, b and c
-    print ("Weights: a=%.3f , b=%.3f, c=%.3f" % (lr.coef_[0], lr.coef_[1], lr.intercept_))
-
-    # c. predict test data values and round to 2 decimal places
-    pred = np.round(lr.predict(x_test),2)
-
-    # d. plot actual and predicted values and save to file
-    create_plot(test, pred, name)
-
-    # e. compute the loss function (SSE)
-    compute_sse(test[1], pred)
-
-print("\nSurviving Patients:")
-predict_q(train0, test0, "Q_0.png")
-
-print("\nDeceased Patients:")
-predict_q(train1, test1, "Q_1.png")
-
-print ("\n--Question 2.3 (Cubic Spline)--")
-# Question 2.3 - Use Cubic Spline model to predict the test data values
-def predict_cs(train, test, name):
-    cs = PolynomialFeatures(degree=3, include_bias=False)
-
-    # Transform x data to polynomial features
-    x_train = cs.fit_transform(train[0])
-    x_test = cs.transform(test[0])
-
-    # a. fit the model
-    lr = LinearRegression()
-    lr.fit(x_train, train[1])
-
-    # b. Print the weights a, b, c, and d
-    print ("Weights: a=%.3f , b=%.3f, c=%.3f, d=%.3f" % (lr.coef_[0], lr.coef_[1], lr.coef_[2], lr.intercept_))
-
-    # c. predict test data values and round to 2 decimal places
-    pred = np.round(lr.predict(x_test),2)
-
-    # d. plot actual and predicted values and save to file
-    create_plot(test, pred, name)
-
-    # e. compute the loss function (SSE)
-    compute_sse(test[1], pred)
-
-print("\nSurviving Patients:")
-predict_cs(train0, test0, "CS_0.png")
-
-print("\nDeceased Patients:")
-predict_cs(train1, test1, "CS_1.png")
-
-
-print ("\n--Question 2.4 (GLM1)--")
-# Question 2.4 - Use first GLM model to predict the test data values
-def predict_glm1(train, test, name):
-
-    glm = PolynomialFeatures(degree=1, include_bias=False)
-
-    # Transform x data to polynomial features
-    x_train = glm.fit_transform(np.log(train[0]))
-    x_test = glm.transform(np.log(test[0]))
-
-    # a. fit the model
-    lr = LinearRegression()
-    lr.fit(x_train, train[1])
-
-    # b. Print the weights a, b
-    print ("Weights: a=%.3f , b=%.3f" % (lr.coef_[0], lr.intercept_))
-
-    # c. predict test data values and round to 2 decimal places
-    pred = np.round(lr.predict(x_test),2)
-
-    # d. plot actual and predicted values and save to file
-    create_plot(test, pred, name)
-
-    # e. compute the loss function (SSE)
-    compute_sse(test[1], pred)
-
-print("\nSurviving Patients:")
-predict_glm1(train0, test0, "GLM1_0.png")
-
-print("\nDeceased Patients:")
-predict_glm1(train1, test1, "GLM1_1.png")
-
-
-print ("\n--Question 2.5 (GLM2)--")
-# Question 2.5 - Use second GLM model to predict the test data values
-def predict_glm2(train, test, name):
-
-    glm = PolynomialFeatures(degree=1, include_bias=False)
-
-    # Transform x data to polynomial features
-    x_train = glm.fit_transform(np.log(train[0]))
-    x_test = glm.transform(np.log(test[0]))
-
-    # a. fit the model (apply log to y as well)
-    lr = LinearRegression()
-    lr.fit(x_train, np.log(train[1]))
-
-    # b. Print the weights a, b
-    print ("Weights: a=%.3f , b=%.3f" % (lr.coef_[0], lr.intercept_))
-
-    # c. predict test data values and round to 2 decimal places
-    y_log_pred = lr.predict(x_test)
-
-    # Convert the predicted values from logy to y and round to 2 decimal places
-    pred = np.round(np.exp(y_log_pred),2)
-
-    # d. plot actual and predicted values and save to file
-    create_plot(test, pred, name)
-
-    # e. compute the loss function (SSE)
-    compute_sse(test[1], pred)
-
-print("\nSurviving Patients:")
-predict_glm2(train0, test0, "GLM2_0.png")
-
-print("\nDeceased Patients:")
-predict_glm2(train1, test1, "GLM2_1.png")
+print_counts()
